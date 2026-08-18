@@ -1,0 +1,22 @@
+---
+description: Commit messages must be written in English
+alwaysApply: true
+---
+
+# Commit messages
+
+Always write Git commit messages in **English**, even when the conversation or UI copy is in French.
+
+- Focus on **why**, not a file-by-file dump
+- Use the imperative mood: `Add`, `Fix`, `Update`
+- Keep the subject to one line; add a body only when it clarifies intent
+
+```text
+# BAD
+Ajouter la gestion locale des prêts de matériel.
+
+# GOOD
+Add local equipment loan tracking.
+
+Persist add, edit, and delete of loans in the browser until auth and a database are in place.
+```
