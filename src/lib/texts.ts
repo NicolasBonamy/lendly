@@ -36,6 +36,15 @@ export const texts = {
     loanedAtLabel: "Date du prêt",
     borrowerLabel: "Emprunté par",
   },
+  datePicker: {
+    chooseDate: "Choisir une date",
+  },
+  theme: {
+    label: "Thème d’affichage",
+    light: "Clair",
+    dark: "Sombre",
+    system: "Système",
+  },
   deleteLoan: {
     title: "Supprimer ce prêt ?",
     message: (name: string, borrowerName: string) =>

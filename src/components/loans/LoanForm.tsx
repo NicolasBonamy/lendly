@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useId, useState } from "react";
+import { DatePicker } from "@/components/loans/DatePicker";
 import { compressImageToThumbnail } from "@/lib/loans/image";
 import { todayIsoDate } from "@/lib/loans/dates";
 import { texts } from "@/lib/texts";
@@ -21,6 +22,7 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
   );
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const loanedAtFieldId = useId();
 
   async function handlePhotoChange(file: File | undefined) {
     setPhotoError(null);
@@ -94,18 +96,19 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">
+      <div className="flex flex-col gap-1 text-sm">
+        <label
+          htmlFor={loanedAtFieldId}
+          className="font-medium text-zinc-700 dark:text-zinc-200"
+        >
           {texts.form.loanedAtLabel}
-        </span>
-        <input
-          required
-          type="date"
+        </label>
+        <DatePicker
+          id={loanedAtFieldId}
           value={loanedAt}
-          onChange={(event) => setLoanedAt(event.target.value)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          onChange={setLoanedAt}
         />
-      </label>
+      </div>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">

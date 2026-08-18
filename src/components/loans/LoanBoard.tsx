@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Image from "next/image";
+import { LoanCard } from "@/components/loans/LoanCard";
 import { LoanForm } from "@/components/loans/LoanForm";
 import { LoanRow } from "@/components/loans/LoanRow";
 import {
@@ -14,6 +16,7 @@ import {
 } from "@/lib/loans/storage";
 import type { Loan, LoanInput } from "@/lib/loans/types";
 import { texts } from "@/lib/texts";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export function LoanBoard() {
   const loansSnapshot = useSyncExternalStore(
@@ -60,22 +63,51 @@ export function LoanBoard() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {texts.app.name}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex items-start justify-between gap-4 sm:block">
+          <h1 className="m-0">
+            <span className="sr-only">{texts.app.name}</span>
+            <Image
+              src="/icons/lendly_icon_light.png"
+              alt=""
+              width={699}
+              height={690}
+              priority
+              unoptimized
+              className="h-20 w-20 object-contain dark:hidden"
+            />
+            <Image
+              src="/icons/lendly_icon_dark.png"
+              alt=""
+              width={722}
+              height={717}
+              priority
+              unoptimized
+              className="hidden h-20 w-20 object-contain dark:block"
+            />
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="sm:hidden">
+            <ThemeToggle />
+          </div>
+          <p className="mt-1 hidden text-sm text-zinc-600 sm:block dark:text-zinc-400">
             {texts.app.subtitle}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
-          {texts.actions.addLoan}
-        </button>
+        <p className="text-sm text-zinc-600 sm:hidden dark:text-zinc-400">
+          {texts.app.subtitle}
+        </p>
+        <div className="flex justify-end sm:flex-col sm:items-end sm:gap-2">
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          >
+            {texts.actions.addLoan}
+          </button>
+        </div>
       </header>
 
       {loans.length === 0 ? (
@@ -95,31 +127,43 @@ export function LoanBoard() {
           </button>
         </section>
       ) : (
-        <section className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.name}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  {texts.table.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loans.map((loan) => (
-                <LoanRow
-                  key={loan.id}
-                  loan={loan}
-                  onEdit={openEditForm}
-                  onDelete={setLoanToDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:hidden">
+            {loans.map((loan) => (
+              <LoanCard
+                key={loan.id}
+                loan={loan}
+                onEdit={openEditForm}
+                onDelete={setLoanToDelete}
+              />
+            ))}
+          </section>
+          <section className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white xl:block dark:border-zinc-800 dark:bg-zinc-900">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.name}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
+                  <th className="px-4 py-3 text-right font-medium">
+                    {texts.table.actions}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loans.map((loan) => (
+                  <LoanRow
+                    key={loan.id}
+                    loan={loan}
+                    onEdit={openEditForm}
+                    onDelete={setLoanToDelete}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       )}
 
       {isFormOpen ? (
