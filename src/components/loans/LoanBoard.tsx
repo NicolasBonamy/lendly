@@ -13,6 +13,7 @@ import {
   updateLoan,
 } from "@/lib/loans/storage";
 import type { Loan, LoanInput } from "@/lib/loans/types";
+import { texts } from "@/lib/texts";
 
 export function LoanBoard() {
   const loansSnapshot = useSyncExternalStore(
@@ -62,10 +63,10 @@ export function LoanBoard() {
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Lendly
+            {texts.app.name}
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Prêts de matériel enregistrés sur cet appareil.
+            {texts.app.subtitle}
           </p>
         </div>
         <button
@@ -73,25 +74,24 @@ export function LoanBoard() {
           onClick={openCreateForm}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
-          Ajouter un prêt
+          {texts.actions.addLoan}
         </button>
       </header>
 
       {loans.length === 0 ? (
         <section className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
-            Aucun prêt pour le moment
+            {texts.emptyState.title}
           </p>
           <p className="mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-            Ajoute un premier objet prêté : nom, date, emprunteur et une photo
-            optionnelle.
+            {texts.emptyState.description}
           </p>
           <button
             type="button"
             onClick={openCreateForm}
             className="mt-6 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
           >
-            Ajouter un prêt
+            {texts.actions.addLoan}
           </button>
         </section>
       ) : (
@@ -99,11 +99,13 @@ export function LoanBoard() {
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
               <tr>
-                <th className="px-4 py-3 font-medium">Photo</th>
-                <th className="px-4 py-3 font-medium">Nom</th>
-                <th className="px-4 py-3 font-medium">Date du prêt</th>
-                <th className="px-4 py-3 font-medium">Emprunté par</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
+                <th className="px-4 py-3 font-medium">{texts.table.name}</th>
+                <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
+                <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {texts.table.actions}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +131,7 @@ export function LoanBoard() {
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
           >
             <span id="loan-form-title" className="sr-only">
-              {loanToEdit ? "Modifier le prêt" : "Ajouter un prêt"}
+              {loanToEdit ? texts.actions.editLoan : texts.actions.addLoan}
             </span>
             <LoanForm
               key={loanToEdit?.id ?? "new"}
@@ -153,11 +155,13 @@ export function LoanBoard() {
               id="delete-title"
               className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
             >
-              Supprimer ce prêt ?
+              {texts.deleteLoan.title}
             </h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              « {loanToDelete.name} » prêté à {loanToDelete.borrowerName} sera
-              retiré de cet appareil.
+              {texts.deleteLoan.message(
+                loanToDelete.name,
+                loanToDelete.borrowerName,
+              )}
             </p>
             <div className="mt-6 flex justify-end gap-2">
               <button
@@ -165,14 +169,14 @@ export function LoanBoard() {
                 onClick={() => setLoanToDelete(null)}
                 className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
-                Annuler
+                {texts.actions.cancel}
               </button>
               <button
                 type="button"
                 onClick={confirmDelete}
                 className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
-                Supprimer
+                {texts.actions.delete}
               </button>
             </div>
           </div>

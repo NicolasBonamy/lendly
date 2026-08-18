@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { texts } from "@/lib/texts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lendly",
-  description: "Gestion locale des prêts de matériel",
+  title: texts.app.name,
+  description: texts.app.description,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,4 +1,5 @@
 import { formatLoanDate } from "@/lib/loans/dates";
+import { texts } from "@/lib/texts";
 import type { Loan } from "@/lib/loans/types";
 
 type LoanRowProps = {
@@ -24,7 +25,7 @@ export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
             aria-hidden="true"
             className="flex h-12 w-12 items-center justify-center rounded-md bg-zinc-200 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
           >
-            —
+            {texts.table.photoPlaceholder}
           </div>
         )}
       </td>
@@ -44,14 +45,14 @@ export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
             onClick={() => onEdit(loan)}
             className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
-            Modifier
+            {texts.actions.edit}
           </button>
           <button
             type="button"
             onClick={() => onDelete(loan)}
             className="rounded-md px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
           >
-            Supprimer
+            {texts.actions.delete}
           </button>
         </div>
       </td>

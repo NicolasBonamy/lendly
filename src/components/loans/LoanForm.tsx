@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { compressImageToThumbnail } from "@/lib/loans/image";
 import { todayIsoDate } from "@/lib/loans/dates";
+import { texts } from "@/lib/texts";
 import type { Loan, LoanInput } from "@/lib/loans/types";
 
 type LoanFormProps = {
@@ -32,7 +33,7 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
       const thumbnail = await compressImageToThumbnail(file);
       setPhotoDataUrl(thumbnail);
     } catch {
-      setPhotoError("Impossible de lire cette image. Réessaie avec un autre fichier.");
+      setPhotoError(texts.form.photoError);
     } finally {
       setIsCompressing(false);
     }
@@ -48,7 +49,7 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
     });
   }
 
-  const title = loan ? "Modifier le prêt" : "Ajouter un prêt";
+  const title = loan ? texts.actions.editLoan : texts.actions.addLoan;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -58,14 +59,14 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
-          Photo de l’objet
+          {texts.form.photoLabel}
         </span>
         {photoDataUrl ? (
           // Preview of the compressed thumbnail before save.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={photoDataUrl}
-            alt="Aperçu de l’objet"
+            alt={texts.form.photoAlt}
             className="h-20 w-20 rounded-md object-cover"
           />
         ) : null}
@@ -76,13 +77,15 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
           className="text-sm text-zinc-600 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-100"
         />
         {isCompressing ? (
-          <span className="text-zinc-500">Préparation de la vignette…</span>
+          <span className="text-zinc-500">{texts.form.photoCompressing}</span>
         ) : null}
         {photoError ? <span className="text-red-600">{photoError}</span> : null}
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-200">Nom</span>
+        <span className="font-medium text-zinc-700 dark:text-zinc-200">
+          {texts.form.nameLabel}
+        </span>
         <input
           required
           value={name}
@@ -93,7 +96,7 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
-          Date du prêt
+          {texts.form.loanedAtLabel}
         </span>
         <input
           required
@@ -106,7 +109,7 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
-          Emprunté par
+          {texts.form.borrowerLabel}
         </span>
         <input
           required
@@ -122,14 +125,14 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
           onClick={onCancel}
           className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
-          Annuler
+          {texts.actions.cancel}
         </button>
         <button
           type="submit"
           disabled={isCompressing}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
-          Enregistrer
+          {texts.actions.save}
         </button>
       </div>
     </form>
