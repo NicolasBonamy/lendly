@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import { LoanCard } from "@/components/loans/LoanCard";
 import { LoanForm } from "@/components/loans/LoanForm";
 import { LoanRow } from "@/components/loans/LoanRow";
 import {
@@ -95,31 +96,43 @@ export function LoanBoard() {
           </button>
         </section>
       ) : (
-        <section className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.name}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
-                <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  {texts.table.actions}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loans.map((loan) => (
-                <LoanRow
-                  key={loan.id}
-                  loan={loan}
-                  onEdit={openEditForm}
-                  onDelete={setLoanToDelete}
-                />
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:hidden">
+            {loans.map((loan) => (
+              <LoanCard
+                key={loan.id}
+                loan={loan}
+                onEdit={openEditForm}
+                onDelete={setLoanToDelete}
+              />
+            ))}
+          </section>
+          <section className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white xl:block dark:border-zinc-800 dark:bg-zinc-900">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.name}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
+                  <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
+                  <th className="px-4 py-3 text-right font-medium">
+                    {texts.table.actions}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loans.map((loan) => (
+                  <LoanRow
+                    key={loan.id}
+                    loan={loan}
+                    onEdit={openEditForm}
+                    onDelete={setLoanToDelete}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       )}
 
       {isFormOpen ? (
