@@ -305,7 +305,9 @@ export function LoanBoard() {
               {loanToEdit ? texts.actions.editLoan : texts.actions.addLoan}
             </span>
             {error ? (
-              <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+                {error}
+              </p>
             ) : null}
             <LoanForm
               key={loanToEdit?.id ?? "new"}
@@ -335,11 +337,13 @@ export function LoanBoard() {
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               {texts.deleteLoan.message(
                 loanToDelete.name,
-                loanToDelete.borrowerName,
+                loanToDelete.borrowerName
               )}
             </p>
             {error ? (
-              <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                {error}
+              </p>
             ) : null}
             <div className="mt-6 flex justify-end gap-2">
               <button
