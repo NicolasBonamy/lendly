@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
-import Image from "next/image";
 import { LoanCard } from "@/components/loans/LoanCard";
 import { LoanForm } from "@/components/loans/LoanForm";
 import { LoanRow } from "@/components/loans/LoanRow";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   addLoan,
   deleteLoan,
@@ -16,13 +15,14 @@ import {
 } from "@/lib/loans/storage";
 import type { Loan, LoanInput } from "@/lib/loans/types";
 import { texts } from "@/lib/texts";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import Image from "next/image";
+import { useState, useSyncExternalStore } from "react";
 
 export function LoanBoard() {
   const loansSnapshot = useSyncExternalStore(
     subscribeLoans,
     getLoansSnapshot,
-    getLoansServerSnapshot,
+    getLoansServerSnapshot
   );
   const loans = parseLoansSnapshot(loansSnapshot);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -144,8 +144,12 @@ export function LoanBoard() {
                 <tr>
                   <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
                   <th className="px-4 py-3 font-medium">{texts.table.name}</th>
-                  <th className="px-4 py-3 font-medium">{texts.table.loanedAt}</th>
-                  <th className="px-4 py-3 font-medium">{texts.table.borrower}</th>
+                  <th className="px-4 py-3 font-medium">
+                    {texts.table.loanedAt}
+                  </th>
+                  <th className="px-4 py-3 font-medium">
+                    {texts.table.borrower}
+                  </th>
                   <th className="px-4 py-3 text-right font-medium">
                     {texts.table.actions}
                   </th>
@@ -204,7 +208,7 @@ export function LoanBoard() {
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               {texts.deleteLoan.message(
                 loanToDelete.name,
-                loanToDelete.borrowerName,
+                loanToDelete.borrowerName
               )}
             </p>
             <div className="mt-6 flex justify-end gap-2">
