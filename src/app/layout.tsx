@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/theme/Providers";
@@ -18,22 +18,16 @@ export const metadata: Metadata = {
   title: texts.app.name,
   description: texts.app.description,
   icons: {
-    icon: [
-      {
-        url: "/icons/favicon-light.png",
-        type: "image/png",
-        sizes: "192x192",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icons/favicon-dark.png",
-        type: "image/png",
-        sizes: "192x192",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
+    icon: [{ url: "/icons/app-icon.png", type: "image/png", sizes: "192x192" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
