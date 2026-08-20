@@ -1,14 +1,15 @@
 "use client";
 
-import { FormEvent, useId, useState } from "react";
+import { ChangeEvent, FormEvent, useId, useState } from "react";
 import { DatePicker } from "@/components/loans/DatePicker";
 import { compressImageToThumbnail } from "@/lib/loans/image";
 import { todayIsoDate } from "@/lib/loans/dates";
 import { texts } from "@/lib/texts";
-import type { Loan, LoanInput } from "@/lib/loans/types";
+import type { Loan, LoanInput, LoanKind } from "@/lib/loans/types";
 
 type LoanFormProps = {
   loan?: Loan | null;
+  kind: LoanKind;
   isSubmitting?: boolean;
   onSubmit: (input: LoanInput) => void | Promise<void>;
   onCancel: () => void;
@@ -16,10 +17,13 @@ type LoanFormProps = {
 
 export function LoanForm({
   loan,
+  kind: kindProp,
   isSubmitting = false,
   onSubmit,
   onCancel,
 }: LoanFormProps) {
+  const kind = loan?.kind ?? kindProp;
+  const labels = texts.forKind(kind);
   const [name, setName] = useState(loan?.name ?? "");
   const [loanedAt, setLoanedAt] = useState(loan?.loanedAt ?? todayIsoDate());
   const [borrowerName, setBorrowerName] = useState(loan?.borrowerName ?? "");
@@ -29,6 +33,8 @@ export function LoanForm({
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const loanedAtFieldId = useId();
+  const fileInputId = useId();
+  const cameraInputId = useId();
 
   async function handlePhotoChange(file: File | undefined) {
     setPhotoError(null);
@@ -47,9 +53,16 @@ export function LoanForm({
     }
   }
 
+  function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    void handlePhotoChange(input.files?.[0]);
+    input.value = "";
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     await onSubmit({
+      kind,
       name,
       loanedAt,
       borrowerName,
@@ -57,7 +70,9 @@ export function LoanForm({
     });
   }
 
-  const title = loan ? texts.actions.editLoan : texts.actions.addLoan;
+  const title = loan ? labels.edit : labels.add;
+  const photoButtonClassName =
+    "inline-flex cursor-pointer rounded-md bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700";
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -65,7 +80,7 @@ export function LoanForm({
         {title}
       </h2>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <div className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
           {texts.form.photoLabel}
         </span>
@@ -78,17 +93,37 @@ export function LoanForm({
             className="h-20 w-20 rounded-md object-cover"
           />
         ) : null}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(event) => handlePhotoChange(event.target.files?.[0])}
-          className="text-sm text-zinc-600 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-100"
-        />
+        <div className="flex flex-wrap gap-2">
+          <label htmlFor={fileInputId} className={photoButtonClassName}>
+            {texts.form.chooseFile}
+          </label>
+          <input
+            id={fileInputId}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={handleFileInputChange}
+          />
+          <label
+            htmlFor={cameraInputId}
+            className={`${photoButtonClassName} xl:hidden`}
+          >
+            {texts.form.takePhoto}
+          </label>
+          <input
+            id={cameraInputId}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only xl:hidden"
+            onChange={handleFileInputChange}
+          />
+        </div>
         {isCompressing ? (
           <span className="text-zinc-500">{texts.form.photoCompressing}</span>
         ) : null}
         {photoError ? <span className="text-red-600">{photoError}</span> : null}
-      </label>
+      </div>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
@@ -107,7 +142,7 @@ export function LoanForm({
           htmlFor={loanedAtFieldId}
           className="font-medium text-zinc-700 dark:text-zinc-200"
         >
-          {texts.form.loanedAtLabel}
+          {labels.dateLabel}
         </label>
         <DatePicker
           id={loanedAtFieldId}
@@ -118,7 +153,7 @@ export function LoanForm({
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium text-zinc-700 dark:text-zinc-200">
-          {texts.form.borrowerLabel}
+          {labels.personLabel}
         </span>
         <input
           required

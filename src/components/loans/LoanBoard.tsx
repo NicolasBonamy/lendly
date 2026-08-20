@@ -3,7 +3,8 @@
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { LoanCard } from "@/components/loans/LoanCard";
 import { LoanForm } from "@/components/loans/LoanForm";
-import { LoanRow } from "@/components/loans/LoanRow";
+import { LoanKindTabs } from "@/components/loans/LoanKindTabs";
+import { LoanSection } from "@/components/loans/LoanSection";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Modal } from "@/components/ui/Modal";
 import {
@@ -18,17 +19,23 @@ import {
   listLoans,
   updateLoan,
 } from "@/lib/loans/storage";
-import type { Loan, LoanInput } from "@/lib/loans/types";
+import type { Loan, LoanInput, LoanKind } from "@/lib/loans/types";
 import { texts } from "@/lib/texts";
 import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+function itemsOfKind(loans: Loan[], kind: LoanKind): Loan[] {
+  return loans.filter((loan) => loan.kind === kind);
+}
 
 export function LoanBoard() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [createKind, setCreateKind] = useState<LoanKind>("loan");
+  const [activeKind, setActiveKind] = useState<LoanKind>("loan");
   const [loanToEdit, setLoanToEdit] = useState<Loan | null>(null);
   const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,6 +44,15 @@ export function LoanBoard() {
   const [isImporting, setIsImporting] = useState(false);
 
   useBodyScrollLock(isFormOpen || loanToDelete !== null);
+
+  const loanItems = useMemo(() => itemsOfKind(loans, "loan"), [loans]);
+  const borrowItems = useMemo(() => itemsOfKind(loans, "borrow"), [loans]);
+  const activeItems = activeKind === "loan" ? loanItems : borrowItems;
+  const formKind = loanToEdit?.kind ?? createKind;
+  const formLabels = texts.forKind(formKind);
+  const deleteLabels = loanToDelete
+    ? texts.forKind(loanToDelete.kind)
+    : texts.forKind("loan");
 
   const refreshLoans = useCallback(async () => {
     const nextLoans = await listLoans();
@@ -72,7 +88,8 @@ export function LoanBoard() {
     };
   }, []);
 
-  function openCreateForm() {
+  function openCreateForm(kind: LoanKind) {
+    setCreateKind(kind);
     setLoanToEdit(null);
     setIsFormOpen(true);
     setError(null);
@@ -105,7 +122,7 @@ export function LoanBoard() {
       setIsFormOpen(false);
       setLoanToEdit(null);
     } catch {
-      setError(texts.errors.save);
+      setError(texts.forKind(formKind).saveError);
     } finally {
       setIsSaving(false);
     }
@@ -122,7 +139,7 @@ export function LoanBoard() {
       await refreshLoans();
       setLoanToDelete(null);
     } catch {
-      setError(texts.errors.delete);
+      setError(texts.forKind(loanToDelete.kind).deleteError);
     } finally {
       setIsDeleting(false);
     }
@@ -146,6 +163,8 @@ export function LoanBoard() {
     dismissLocalLoansMigration();
     setPendingLocalLoans([]);
   }
+
+  const activeLabels = texts.forKind(activeKind);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
@@ -183,18 +202,9 @@ export function LoanBoard() {
         <p className="text-sm text-zinc-600 sm:hidden dark:text-zinc-400">
           {texts.app.subtitle}
         </p>
-        <div className="flex justify-end sm:flex-col sm:items-end sm:gap-2">
-          <div className="hidden items-center gap-2 sm:flex">
-            <LogoutButton />
-            <ThemeToggle />
-          </div>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            {texts.actions.addLoan}
-          </button>
+        <div className="hidden items-center gap-2 sm:flex">
+          <LogoutButton />
+          <ThemeToggle />
         </div>
       </header>
 
@@ -229,7 +239,7 @@ export function LoanBoard() {
         </section>
       ) : null}
 
-      {error ? (
+      {error && !isFormOpen && loanToDelete === null ? (
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : null}
 
@@ -237,70 +247,78 @@ export function LoanBoard() {
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {texts.loading}
         </p>
-      ) : loans.length === 0 ? (
-        <section className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
-            {texts.emptyState.title}
-          </p>
-          <p className="mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-            {texts.emptyState.description}
-          </p>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="mt-6 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            {texts.actions.addLoan}
-          </button>
-        </section>
       ) : (
         <>
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:hidden">
-            {loans.map((loan) => (
-              <LoanCard
-                key={loan.id}
-                loan={loan}
-                onEdit={openEditForm}
-                onDelete={setLoanToDelete}
-              />
-            ))}
-          </section>
-          <section className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white xl:block dark:border-zinc-700 dark:bg-zinc-800">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
-                  <th className="px-4 py-3 font-medium">{texts.table.name}</th>
-                  <th className="px-4 py-3 font-medium">
-                    {texts.table.loanedAt}
-                  </th>
-                  <th className="px-4 py-3 font-medium">
-                    {texts.table.borrower}
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium">
-                    {texts.table.actions}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loans.map((loan) => (
-                  <LoanRow
+          <div className="flex flex-col xl:hidden">
+            <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pt-3 pb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <LoanKindTabs
+                  activeKind={activeKind}
+                  counts={{ loan: loanItems.length, borrow: borrowItems.length }}
+                  onChange={setActiveKind}
+                />
+                <button
+                  type="button"
+                  onClick={() => openCreateForm(activeKind)}
+                  className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                >
+                  {activeLabels.add}
+                </button>
+              </div>
+            </div>
+            {activeItems.length === 0 ? (
+              <section className="flex flex-col items-center rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center dark:border-zinc-700 dark:bg-zinc-900">
+                <p className="text-base font-medium text-zinc-900 dark:text-zinc-50">
+                  {activeLabels.emptyTitle}
+                </p>
+                <p className="mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
+                  {activeLabels.emptyDescription}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => openCreateForm(activeKind)}
+                  className="mt-6 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                >
+                  {activeLabels.add}
+                </button>
+              </section>
+            ) : (
+              <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {activeItems.map((loan) => (
+                  <LoanCard
                     key={loan.id}
                     loan={loan}
                     onEdit={openEditForm}
                     onDelete={setLoanToDelete}
                   />
                 ))}
-              </tbody>
-            </table>
-          </section>
+              </section>
+            )}
+          </div>
+
+          <div className="hidden flex-col gap-8 xl:flex">
+            <LoanSection
+              kind="loan"
+              items={loanItems}
+              onAdd={() => openCreateForm("loan")}
+              onEdit={openEditForm}
+              onDelete={setLoanToDelete}
+            />
+            <LoanSection
+              kind="borrow"
+              items={borrowItems}
+              onAdd={() => openCreateForm("borrow")}
+              onEdit={openEditForm}
+              onDelete={setLoanToDelete}
+            />
+          </div>
         </>
       )}
 
       {isFormOpen ? (
         <Modal labelledBy="loan-form-title">
           <span id="loan-form-title" className="sr-only">
-            {loanToEdit ? texts.actions.editLoan : texts.actions.addLoan}
+            {loanToEdit ? formLabels.edit : formLabels.add}
           </span>
           {error ? (
             <p className="mb-4 text-sm text-red-600 dark:text-red-400">
@@ -308,8 +326,9 @@ export function LoanBoard() {
             </p>
           ) : null}
           <LoanForm
-            key={loanToEdit?.id ?? "new"}
+            key={loanToEdit?.id ?? `new-${createKind}`}
             loan={loanToEdit}
+            kind={formKind}
             isSubmitting={isSaving}
             onSubmit={handleSubmit}
             onCancel={closeForm}
@@ -327,10 +346,10 @@ export function LoanBoard() {
             id="delete-title"
             className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
           >
-            {texts.deleteLoan.title}
+            {deleteLabels.deleteTitle}
           </h2>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            {texts.deleteLoan.message(
+            {deleteLabels.deleteMessage(
               loanToDelete.name,
               loanToDelete.borrowerName,
             )}

@@ -1,29 +1,66 @@
+import type { LoanKind } from "@/lib/loans/types";
+
+const kindLabels = {
+  loan: {
+    tab: "Prêts",
+    sectionTitle: "Prêts",
+    add: "Ajouter un prêt",
+    edit: "Modifier le prêt",
+    emptyTitle: "Aucun prêt pour le moment",
+    emptyDescription:
+      "Ajoute un premier objet prêté : nom, date, emprunteur et une photo optionnelle.",
+    dateLabel: "Date du prêt",
+    personLabel: "Emprunté par",
+    deleteTitle: "Supprimer ce prêt ?",
+    deleteMessage: (name: string, personName: string) =>
+      `« ${name} » prêté à ${personName} sera définitivement supprimé.`,
+    saveError: "Impossible d’enregistrer le prêt.",
+    deleteError: "Impossible de supprimer le prêt.",
+  },
+  borrow: {
+    tab: "Emprunts",
+    sectionTitle: "Emprunts",
+    add: "Ajouter un emprunt",
+    edit: "Modifier l’emprunt",
+    emptyTitle: "Aucun emprunt pour le moment",
+    emptyDescription:
+      "Ajoute un premier objet emprunté : nom, date, prêteur et une photo optionnelle.",
+    dateLabel: "Date de l’emprunt",
+    personLabel: "Prêté par",
+    deleteTitle: "Supprimer cet emprunt ?",
+    deleteMessage: (name: string, personName: string) =>
+      `« ${name} » emprunté à ${personName} sera définitivement supprimé.`,
+    saveError: "Impossible d’enregistrer l’emprunt.",
+    deleteError: "Impossible de supprimer l’emprunt.",
+  },
+} as const;
+
+function forKind(kind: LoanKind) {
+  return kindLabels[kind];
+}
+
 // User-facing texts. Edit this file to change labels, titles, and messages.
 export const texts = {
   app: {
     name: "Lendly",
-    description: "Gestion des prêts de matériel",
-    subtitle: "Prêts de matériel synchronisés sur tes appareils.",
+    description: "Gestion des prêts et emprunts de matériel",
+    subtitle: "Prête, emprunte, n’oublie plus rien.",
+  },
+  kinds: kindLabels,
+  forKind,
+  tabs: {
+    label: "Rubriques",
   },
   actions: {
-    addLoan: "Ajouter un prêt",
-    editLoan: "Modifier le prêt",
     edit: "Modifier",
     delete: "Supprimer",
     cancel: "Annuler",
     save: "Enregistrer",
   },
-  emptyState: {
-    title: "Aucun prêt pour le moment",
-    description:
-      "Ajoute un premier objet prêté : nom, date, emprunteur et une photo optionnelle.",
-  },
-  loading: "Chargement des prêts…",
+  loading: "Chargement…",
   table: {
     photo: "Photo",
     name: "Nom",
-    loanedAt: "Date du prêt",
-    borrower: "Emprunté par",
     actions: "Actions",
     photoPlaceholder: "—",
   },
@@ -33,9 +70,9 @@ export const texts = {
     photoCompressing: "Préparation de la vignette…",
     photoError:
       "Impossible de lire cette image. Réessaie avec un autre fichier.",
+    chooseFile: "Choisir un fichier",
+    takePhoto: "Prendre une photo",
     nameLabel: "Nom",
-    loanedAtLabel: "Date du prêt",
-    borrowerLabel: "Emprunté par",
   },
   datePicker: {
     chooseDate: "Choisir une date",
@@ -45,11 +82,6 @@ export const texts = {
     light: "Clair",
     dark: "Sombre",
     system: "Système",
-  },
-  deleteLoan: {
-    title: "Supprimer ce prêt ?",
-    message: (name: string, borrowerName: string) =>
-      `« ${name} » prêté à ${borrowerName} sera définitivement supprimé.`,
   },
   auth: {
     title: "Connexion",
@@ -66,9 +98,7 @@ export const texts = {
       "Supabase n’est pas configuré. Copie .env.example vers .env.local et renseigne l’URL et la clé anon.",
   },
   errors: {
-    load: "Impossible de charger les prêts.",
-    save: "Impossible d’enregistrer le prêt.",
-    delete: "Impossible de supprimer le prêt.",
+    load: "Impossible de charger les prêts et emprunts.",
     import: "Impossible d’importer les prêts locaux.",
   },
   migration: {

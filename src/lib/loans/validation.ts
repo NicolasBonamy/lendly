@@ -1,7 +1,8 @@
-import type { LoanInput } from "@/lib/loans/types";
+import { isLoanKind, type LoanInput } from "@/lib/loans/types";
 
 export function normalizeLoanInput(input: LoanInput): LoanInput {
   return {
+    kind: input.kind,
     name: input.name.trim(),
     photoDataUrl: input.photoDataUrl,
     loanedAt: input.loanedAt,
@@ -10,6 +11,9 @@ export function normalizeLoanInput(input: LoanInput): LoanInput {
 }
 
 export function assertValidLoanInput(input: LoanInput): void {
+  if (!isLoanKind(input.kind)) {
+    throw new Error("Loan kind must be loan or borrow");
+  }
   if (!input.name) {
     throw new Error("Loan name is required");
   }

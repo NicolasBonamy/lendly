@@ -6,6 +6,7 @@ import {
 
 function buildInput(overrides: Partial<LoanInput> = {}): LoanInput {
   return {
+    kind: "loan",
     name: "Drill",
     photoDataUrl: "data:image/jpeg;base64,abc",
     loanedAt: "2026-08-18",
@@ -15,12 +16,17 @@ function buildInput(overrides: Partial<LoanInput> = {}): LoanInput {
 }
 
 describe("loan validation", () => {
-  it("trims name and borrower", () => {
+  it("trims name and borrower and keeps kind", () => {
     expect(
       normalizeLoanInput(
-        buildInput({ name: "  Hammer  ", borrowerName: "  Bob  " }),
+        buildInput({
+          kind: "borrow",
+          name: "  Hammer  ",
+          borrowerName: "  Bob  ",
+        }),
       ),
     ).toEqual({
+      kind: "borrow",
       name: "Hammer",
       photoDataUrl: "data:image/jpeg;base64,abc",
       loanedAt: "2026-08-18",
@@ -48,7 +54,19 @@ describe("loan validation", () => {
     ).toThrow("Loan date must use YYYY-MM-DD");
   });
 
+  it("rejects an invalid kind", () => {
+    expect(() =>
+      assertValidLoanInput(buildInput({ kind: "gift" as LoanInput["kind"] })),
+    ).toThrow("Loan kind must be loan or borrow");
+  });
+
   it("accepts a valid loan", () => {
     expect(() => assertValidLoanInput(buildInput())).not.toThrow();
+  });
+
+  it("accepts a valid borrow", () => {
+    expect(() =>
+      assertValidLoanInput(buildInput({ kind: "borrow" })),
+    ).not.toThrow();
   });
 });
