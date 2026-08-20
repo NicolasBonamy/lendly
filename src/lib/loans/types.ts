@@ -1,7 +1,8 @@
 export type Loan = {
   id: string;
   name: string;
-  photoDataUrl: string | null;
+  photoUrl: string | null;
+  photoPath: string | null;
   loanedAt: string;
   borrowerName: string;
   createdAt: string;

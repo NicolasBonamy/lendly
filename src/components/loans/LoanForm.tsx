@@ -9,16 +9,22 @@ import type { Loan, LoanInput } from "@/lib/loans/types";
 
 type LoanFormProps = {
   loan?: Loan | null;
-  onSubmit: (input: LoanInput) => void;
+  isSubmitting?: boolean;
+  onSubmit: (input: LoanInput) => void | Promise<void>;
   onCancel: () => void;
 };
 
-export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
+export function LoanForm({
+  loan,
+  isSubmitting = false,
+  onSubmit,
+  onCancel,
+}: LoanFormProps) {
   const [name, setName] = useState(loan?.name ?? "");
   const [loanedAt, setLoanedAt] = useState(loan?.loanedAt ?? todayIsoDate());
   const [borrowerName, setBorrowerName] = useState(loan?.borrowerName ?? "");
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(
-    loan?.photoDataUrl ?? null,
+    loan?.photoUrl ?? null,
   );
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -41,9 +47,9 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit({
+    await onSubmit({
       name,
       loanedAt,
       borrowerName,
@@ -126,13 +132,14 @@ export function LoanForm({ loan, onSubmit, onCancel }: LoanFormProps) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          disabled={isSubmitting}
+          className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
           {texts.actions.cancel}
         </button>
         <button
           type="submit"
-          disabled={isCompressing}
+          disabled={isCompressing || isSubmitting}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           {texts.actions.save}

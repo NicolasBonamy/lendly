@@ -1,156 +1,308 @@
+import {
+  clearLocalLoansAfterImport,
+  type LocalLoan,
+} from "@/lib/loans/localLoans";
+import {
+  dataUrlToBlob,
+  isDataUrl,
+  LOAN_PHOTOS_BUCKET,
+  loanPhotoPath,
+  SIGNED_URL_TTL_SECONDS,
+} from "@/lib/loans/photos";
 import type { Loan, LoanInput } from "@/lib/loans/types";
+import {
+  assertValidLoanInput,
+  normalizeLoanInput,
+} from "@/lib/loans/validation";
+import { createClient } from "@/lib/supabase/client";
+import type { LoanRow } from "@/lib/supabase/database";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database";
 
-export const LOANS_STORAGE_KEY = "lendly.loans";
-const LOANS_CHANGE_EVENT = "lendly-loans-changed";
+type BrowserSupabaseClient = SupabaseClient<Database>;
 
-function nowIso(): string {
-  return new Date().toISOString();
+function getBrowserClient(): BrowserSupabaseClient {
+  return createClient();
 }
 
-function readLoans(): Loan[] {
-  if (typeof window === "undefined") {
-    return [];
+async function requireUserId(supabase: BrowserSupabaseClient): Promise<string> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) {
+    throw new Error("Not authenticated");
   }
-
-  const raw = window.localStorage.getItem(LOANS_STORAGE_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed as Loan[];
-  } catch {
-    return [];
-  }
+  return user.id;
 }
 
-function writeLoans(loans: Loan[]): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(LOANS_STORAGE_KEY, JSON.stringify(loans));
-  window.dispatchEvent(new Event(LOANS_CHANGE_EVENT));
-}
-
-function normalizeInput(input: LoanInput): LoanInput {
+function mapLoanRow(row: LoanRow, photoUrl: string | null): Loan {
   return {
-    name: input.name.trim(),
-    photoDataUrl: input.photoDataUrl,
-    loanedAt: input.loanedAt,
-    borrowerName: input.borrowerName.trim(),
+    id: row.id,
+    name: row.name,
+    photoUrl,
+    photoPath: row.photo_path,
+    loanedAt: row.loaned_at,
+    borrowerName: row.borrower_name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
-function assertValidInput(input: LoanInput): void {
-  if (!input.name) {
-    throw new Error("Loan name is required");
-  }
-  if (!input.borrowerName) {
-    throw new Error("Borrower name is required");
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.loanedAt)) {
-    throw new Error("Loan date must use YYYY-MM-DD");
-  }
-}
-
-export function subscribeLoans(onStoreChange: () => void): () => void {
-  if (typeof window === "undefined") {
-    return () => {};
+async function signedUrlsForPaths(
+  supabase: BrowserSupabaseClient,
+  paths: string[],
+): Promise<Map<string, string>> {
+  const urlByPath = new Map<string, string>();
+  if (paths.length === 0) {
+    return urlByPath;
   }
 
-  window.addEventListener("storage", onStoreChange);
-  window.addEventListener(LOANS_CHANGE_EVENT, onStoreChange);
-  return () => {
-    window.removeEventListener("storage", onStoreChange);
-    window.removeEventListener(LOANS_CHANGE_EVENT, onStoreChange);
-  };
-}
-
-export function getLoansSnapshot(): string {
-  if (typeof window === "undefined") {
-    return "[]";
+  const { data, error } = await supabase.storage
+    .from(LOAN_PHOTOS_BUCKET)
+    .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+  if (error || !data) {
+    return urlByPath;
   }
 
-  return window.localStorage.getItem(LOANS_STORAGE_KEY) ?? "[]";
-}
-
-export function getLoansServerSnapshot(): string {
-  return "[]";
-}
-
-export function parseLoansSnapshot(raw: string): Loan[] {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
+  for (const item of data) {
+    if (item.path && item.signedUrl) {
+      urlByPath.set(item.path, item.signedUrl);
     }
-    return [...(parsed as Loan[])].sort((left, right) => {
-      if (left.loanedAt === right.loanedAt) {
-        return right.createdAt.localeCompare(left.createdAt);
-      }
-      return right.loanedAt.localeCompare(left.loanedAt);
+  }
+  return urlByPath;
+}
+
+async function uploadPhoto(
+  supabase: BrowserSupabaseClient,
+  path: string,
+  dataUrl: string,
+): Promise<void> {
+  const blob = dataUrlToBlob(dataUrl);
+  const { error } = await supabase.storage
+    .from(LOAN_PHOTOS_BUCKET)
+    .upload(path, blob, {
+      contentType: blob.type || "image/jpeg",
+      upsert: true,
     });
-  } catch {
-    return [];
+  if (error) {
+    throw new Error(error.message);
   }
 }
 
-export function listLoans(): Loan[] {
-  return parseLoansSnapshot(getLoansSnapshot());
+async function removePhoto(
+  supabase: BrowserSupabaseClient,
+  path: string,
+): Promise<void> {
+  const { error } = await supabase.storage
+    .from(LOAN_PHOTOS_BUCKET)
+    .remove([path]);
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
-export function getLoan(id: string): Loan | undefined {
-  return readLoans().find((loan) => loan.id === id);
+async function resolvePhotoPath(
+  supabase: BrowserSupabaseClient,
+  userId: string,
+  loanId: string,
+  photoDataUrl: string | null,
+  currentPath: string | null,
+): Promise<string | null> {
+  if (photoDataUrl === null) {
+    if (currentPath) {
+      await removePhoto(supabase, currentPath);
+    }
+    return null;
+  }
+
+  if (isDataUrl(photoDataUrl)) {
+    const path = currentPath ?? loanPhotoPath(userId, loanId);
+    await uploadPhoto(supabase, path, photoDataUrl);
+    return path;
+  }
+
+  return currentPath;
 }
 
-export function addLoan(input: LoanInput): Loan {
-  const normalized = normalizeInput(input);
-  assertValidInput(normalized);
-
-  const timestamp = nowIso();
-  const loan: Loan = {
-    id: crypto.randomUUID(),
-    ...normalized,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-
-  writeLoans([...readLoans(), loan]);
-  return loan;
+async function withPhotoUrl(row: LoanRow): Promise<Loan> {
+  const supabase = getBrowserClient();
+  if (!row.photo_path) {
+    return mapLoanRow(row, null);
+  }
+  const urls = await signedUrlsForPaths(supabase, [row.photo_path]);
+  return mapLoanRow(row, urls.get(row.photo_path) ?? null);
 }
 
-export function updateLoan(id: string, input: LoanInput): Loan {
-  const loans = readLoans();
-  const index = loans.findIndex((loan) => loan.id === id);
-  if (index === -1) {
+export async function listLoans(): Promise<Loan[]> {
+  const supabase = getBrowserClient();
+  await requireUserId(supabase);
+
+  const { data, error } = await supabase
+    .from("loans")
+    .select("*")
+    .order("loaned_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = data ?? [];
+  const paths = rows
+    .map((row) => row.photo_path)
+    .filter((path): path is string => Boolean(path));
+  const urls = await signedUrlsForPaths(supabase, paths);
+
+  return rows.map((row) =>
+    mapLoanRow(row, row.photo_path ? (urls.get(row.photo_path) ?? null) : null),
+  );
+}
+
+export async function getLoan(id: string): Promise<Loan | undefined> {
+  const supabase = getBrowserClient();
+  await requireUserId(supabase);
+
+  const { data, error } = await supabase
+    .from("loans")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) {
+    return undefined;
+  }
+  return withPhotoUrl(data);
+}
+
+export async function addLoan(input: LoanInput): Promise<Loan> {
+  const normalized = normalizeLoanInput(input);
+  assertValidLoanInput(normalized);
+
+  const supabase = getBrowserClient();
+  const userId = await requireUserId(supabase);
+  const id = crypto.randomUUID();
+  const photoPath = await resolvePhotoPath(
+    supabase,
+    userId,
+    id,
+    normalized.photoDataUrl,
+    null,
+  );
+
+  const { data, error } = await supabase
+    .from("loans")
+    .insert({
+      id,
+      user_id: userId,
+      name: normalized.name,
+      photo_path: photoPath,
+      loaned_at: normalized.loanedAt,
+      borrower_name: normalized.borrowerName,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    if (photoPath) {
+      await supabase.storage.from(LOAN_PHOTOS_BUCKET).remove([photoPath]);
+    }
+    throw new Error(error?.message ?? "Unable to create loan");
+  }
+
+  return withPhotoUrl(data);
+}
+
+export async function updateLoan(
+  id: string,
+  input: LoanInput,
+): Promise<Loan> {
+  const normalized = normalizeLoanInput(input);
+  assertValidLoanInput(normalized);
+
+  const supabase = getBrowserClient();
+  const userId = await requireUserId(supabase);
+
+  const { data: existing, error: existingError } = await supabase
+    .from("loans")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+  if (!existing) {
     throw new Error(`Loan not found: ${id}`);
   }
 
-  const normalized = normalizeInput(input);
-  assertValidInput(normalized);
+  const photoPath = await resolvePhotoPath(
+    supabase,
+    userId,
+    id,
+    normalized.photoDataUrl,
+    existing.photo_path,
+  );
 
-  const updated: Loan = {
-    ...loans[index],
-    ...normalized,
-    updatedAt: nowIso(),
-  };
+  const { data, error } = await supabase
+    .from("loans")
+    .update({
+      name: normalized.name,
+      photo_path: photoPath,
+      loaned_at: normalized.loanedAt,
+      borrower_name: normalized.borrowerName,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
 
-  const nextLoans = [...loans];
-  nextLoans[index] = updated;
-  writeLoans(nextLoans);
-  return updated;
+  if (error || !data) {
+    throw new Error(error?.message ?? "Unable to update loan");
+  }
+
+  return withPhotoUrl(data);
 }
 
-export function deleteLoan(id: string): void {
-  const loans = readLoans();
-  const nextLoans = loans.filter((loan) => loan.id !== id);
-  if (nextLoans.length === loans.length) {
+export async function deleteLoan(id: string): Promise<void> {
+  const supabase = getBrowserClient();
+  await requireUserId(supabase);
+
+  const { data: existing, error: existingError } = await supabase
+    .from("loans")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+  if (!existing) {
     throw new Error(`Loan not found: ${id}`);
   }
-  writeLoans(nextLoans);
+
+  const { error } = await supabase.from("loans").delete().eq("id", id);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (existing.photo_path) {
+    await supabase.storage
+      .from(LOAN_PHOTOS_BUCKET)
+      .remove([existing.photo_path]);
+  }
+}
+
+export async function importLocalLoans(loans: LocalLoan[]): Promise<void> {
+  for (const loan of loans) {
+    await addLoan({
+      name: loan.name,
+      photoDataUrl: loan.photoDataUrl,
+      loanedAt: loan.loanedAt,
+      borrowerName: loan.borrowerName,
+    });
+  }
+  clearLocalLoansAfterImport();
 }
