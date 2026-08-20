@@ -10,7 +10,7 @@ type LoanRowProps = {
 
 export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
   return (
-    <tr className="border-b border-zinc-200 last:border-b-0 dark:border-zinc-800">
+    <tr className="border-b border-zinc-200 last:border-b-0 dark:border-zinc-700">
       <td className="px-4 py-3">
         {loan.photoUrl ? (
           // Thumbnail comes from a signed Supabase Storage URL (or a local preview).
@@ -23,7 +23,7 @@ export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
         ) : (
           <div
             aria-hidden="true"
-            className="flex h-12 w-12 items-center justify-center rounded-md bg-zinc-200 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            className="flex h-12 w-12 items-center justify-center rounded-md bg-zinc-200 text-xs text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
           >
             {texts.table.photoPlaceholder}
           </div>
@@ -43,7 +43,7 @@ export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
           <button
             type="button"
             onClick={() => onEdit(loan)}
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
           >
             {texts.actions.edit}
           </button>
