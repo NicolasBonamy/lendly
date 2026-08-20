@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { fr } from "react-day-picker/locale";
-import { formatLoanDate, parseIsoDate, toIsoDate, todayIsoDate } from "@/lib/loans/dates";
+import {
+  formatLoanDate,
+  parseIsoDate,
+  toIsoDate,
+  todayIsoDate,
+} from "@/lib/loans/dates";
 import { texts } from "@/lib/texts";
 
 type DatePickerProps = {
@@ -23,7 +28,7 @@ export function DatePicker({ id, value, onChange }: DatePickerProps) {
       return;
     }
 
-    function handlePointerDown(event: MouseEvent) {
+    function handleDocumentClick(event: MouseEvent) {
       if (!containerRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -35,10 +40,10 @@ export function DatePicker({ id, value, onChange }: DatePickerProps) {
       }
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
@@ -57,7 +62,7 @@ export function DatePicker({ id, value, onChange }: DatePickerProps) {
         {formatLoanDate(value)}
       </button>
       {isOpen ? (
-        <div className="mt-2 w-fit rounded-xl border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="mt-2 w-fit max-w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
           <DayPicker
             mode="single"
             locale={fr}

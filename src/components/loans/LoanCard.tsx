@@ -10,7 +10,7 @@ type LoanCardProps = {
 
 export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
   return (
-    <article className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <article className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <div className="flex gap-4">
         {loan.photoUrl ? (
           // Thumbnail comes from a signed Supabase Storage URL (or a local preview).
@@ -23,7 +23,7 @@ export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
         ) : (
           <div
             aria-hidden="true"
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-zinc-200 text-sm text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
           >
             {texts.table.photoPlaceholder}
           </div>
@@ -52,7 +52,7 @@ export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
         <button
           type="button"
           onClick={() => onEdit(loan)}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           {texts.actions.edit}
         </button>

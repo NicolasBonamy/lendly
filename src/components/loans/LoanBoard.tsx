@@ -5,6 +5,7 @@ import { LoanCard } from "@/components/loans/LoanCard";
 import { LoanForm } from "@/components/loans/LoanForm";
 import { LoanRow } from "@/components/loans/LoanRow";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Modal } from "@/components/ui/Modal";
 import {
   dismissLocalLoansMigration,
   readPendingLocalLoans,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/loans/storage";
 import type { Loan, LoanInput } from "@/lib/loans/types";
 import { texts } from "@/lib/texts";
+import { useBodyScrollLock } from "@/lib/useBodyScrollLock";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
@@ -33,6 +35,8 @@ export function LoanBoard() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingLocalLoans, setPendingLocalLoans] = useState<LocalLoan[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+
+  useBodyScrollLock(isFormOpen || loanToDelete !== null);
 
   const refreshLoans = useCallback(async () => {
     const nextLoans = await listLoans();
@@ -261,9 +265,9 @@ export function LoanBoard() {
               />
             ))}
           </section>
-          <section className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white xl:block dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="hidden overflow-x-auto rounded-xl border border-zinc-200 bg-white xl:block dark:border-zinc-700 dark:bg-zinc-800">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+              <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>
                   <th className="px-4 py-3 font-medium">{texts.table.photo}</th>
                   <th className="px-4 py-3 font-medium">{texts.table.name}</th>
@@ -294,77 +298,67 @@ export function LoanBoard() {
       )}
 
       {isFormOpen ? (
-        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="loan-form-title"
-            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
-          >
-            <span id="loan-form-title" className="sr-only">
-              {loanToEdit ? texts.actions.editLoan : texts.actions.addLoan}
-            </span>
-            {error ? (
-              <p className="mb-4 text-sm text-red-600 dark:text-red-400">
-                {error}
-              </p>
-            ) : null}
-            <LoanForm
-              key={loanToEdit?.id ?? "new"}
-              loan={loanToEdit}
-              isSubmitting={isSaving}
-              onSubmit={handleSubmit}
-              onCancel={closeForm}
-            />
-          </div>
-        </div>
+        <Modal labelledBy="loan-form-title">
+          <span id="loan-form-title" className="sr-only">
+            {loanToEdit ? texts.actions.editLoan : texts.actions.addLoan}
+          </span>
+          {error ? (
+            <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          ) : null}
+          <LoanForm
+            key={loanToEdit?.id ?? "new"}
+            loan={loanToEdit}
+            isSubmitting={isSaving}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+          />
+        </Modal>
       ) : null}
 
       {loanToDelete ? (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-title"
-            className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900"
+        <Modal
+          labelledBy="delete-title"
+          maxWidthClassName="max-w-sm"
+          zClassName="z-20"
+        >
+          <h2
+            id="delete-title"
+            className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
           >
-            <h2
-              id="delete-title"
-              className="text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-            >
-              {texts.deleteLoan.title}
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              {texts.deleteLoan.message(
-                loanToDelete.name,
-                loanToDelete.borrowerName
-              )}
+            {texts.deleteLoan.title}
+          </h2>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            {texts.deleteLoan.message(
+              loanToDelete.name,
+              loanToDelete.borrowerName,
+            )}
+          </p>
+          {error ? (
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              {error}
             </p>
-            {error ? (
-              <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                {error}
-              </p>
-            ) : null}
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setLoanToDelete(null)}
-                disabled={isDeleting}
-                className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              >
-                {texts.actions.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmDelete()}
-                disabled={isDeleting}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {texts.actions.delete}
-              </button>
-            </div>
+          ) : null}
+          <div className="mt-6 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setLoanToDelete(null)}
+              disabled={isDeleting}
+              className="rounded-md px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              {texts.actions.cancel}
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmDelete()}
+              disabled={isDeleting}
+              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {texts.actions.delete}
+            </button>
           </div>
-        </div>
+        </Modal>
       ) : null}
     </main>
   );

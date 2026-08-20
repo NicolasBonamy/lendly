@@ -128,7 +128,7 @@ export function LoanForm({
         />
       </label>
 
-      <div className="mt-2 flex justify-end gap-2">
+      <div className="sticky bottom-0 -mx-6 -mb-6 mt-2 flex justify-end gap-2 border-t border-zinc-200 bg-white px-6 pt-4 pb-6 dark:border-zinc-800 dark:bg-zinc-900">
         <button
           type="button"
           onClick={onCancel}
