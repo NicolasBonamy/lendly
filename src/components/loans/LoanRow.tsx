@@ -12,11 +12,11 @@ export function LoanRow({ loan, onEdit, onDelete }: LoanRowProps) {
   return (
     <tr className="border-b border-zinc-200 last:border-b-0 dark:border-zinc-800">
       <td className="px-4 py-3">
-        {loan.photoDataUrl ? (
-          // Thumbnail is stored as a compressed data URL in localStorage.
+        {loan.photoUrl ? (
+          // Thumbnail comes from a signed Supabase Storage URL (or a local preview).
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={loan.photoDataUrl}
+            src={loan.photoUrl}
             alt=""
             className="h-12 w-12 rounded-md object-cover"
           />

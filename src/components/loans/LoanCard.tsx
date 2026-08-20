@@ -12,11 +12,11 @@ export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
   return (
     <article className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex gap-4">
-        {loan.photoDataUrl ? (
-          // Thumbnail is stored as a compressed data URL in localStorage.
+        {loan.photoUrl ? (
+          // Thumbnail comes from a signed Supabase Storage URL (or a local preview).
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={loan.photoDataUrl}
+            src={loan.photoUrl}
             alt=""
             className="h-20 w-20 shrink-0 rounded-lg object-cover"
           />
