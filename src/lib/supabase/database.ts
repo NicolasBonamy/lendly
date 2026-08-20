@@ -1,6 +1,9 @@
+import type { LoanKind } from "@/lib/loans/types";
+
 export type LoanRow = {
   id: string;
   user_id: string;
+  kind: LoanKind;
   name: string;
   photo_path: string | null;
   loaned_at: string;
@@ -17,6 +20,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
+          kind?: LoanKind;
           name: string;
           photo_path?: string | null;
           loaned_at: string;
@@ -27,6 +31,7 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string;
+          kind?: LoanKind;
           name?: string;
           photo_path?: string | null;
           loaned_at?: string;

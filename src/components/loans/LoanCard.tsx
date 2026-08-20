@@ -9,6 +9,8 @@ type LoanCardProps = {
 };
 
 export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
+  const labels = texts.forKind(loan.kind);
+
   return (
     <article className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
       <div className="flex gap-4">
@@ -35,13 +37,13 @@ export function LoanCard({ loan, onEdit, onDelete }: LoanCardProps) {
           <dl className="mt-2 space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
             <div>
               <dt className="inline text-zinc-500 dark:text-zinc-400">
-                {texts.table.loanedAt} :{" "}
+                {labels.dateLabel} :{" "}
               </dt>
               <dd className="inline">{formatLoanDate(loan.loanedAt)}</dd>
             </div>
             <div>
               <dt className="inline text-zinc-500 dark:text-zinc-400">
-                {texts.table.borrower} :{" "}
+                {labels.personLabel} :{" "}
               </dt>
               <dd className="inline">{loan.borrowerName}</dd>
             </div>

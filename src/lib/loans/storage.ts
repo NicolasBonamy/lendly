@@ -9,6 +9,7 @@ import {
   loanPhotoPath,
   SIGNED_URL_TTL_SECONDS,
 } from "@/lib/loans/photos";
+import { mapLoanRow } from "@/lib/loans/mapLoanRow";
 import type { Loan, LoanInput } from "@/lib/loans/types";
 import {
   assertValidLoanInput,
@@ -34,19 +35,6 @@ async function requireUserId(supabase: BrowserSupabaseClient): Promise<string> {
     throw new Error("Not authenticated");
   }
   return user.id;
-}
-
-function mapLoanRow(row: LoanRow, photoUrl: string | null): Loan {
-  return {
-    id: row.id,
-    name: row.name,
-    photoUrl,
-    photoPath: row.photo_path,
-    loanedAt: row.loaned_at,
-    borrowerName: row.borrower_name,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
 }
 
 async function signedUrlsForPaths(
@@ -198,6 +186,7 @@ export async function addLoan(input: LoanInput): Promise<Loan> {
     .insert({
       id,
       user_id: userId,
+      kind: normalized.kind,
       name: normalized.name,
       photo_path: photoPath,
       loaned_at: normalized.loanedAt,
@@ -250,6 +239,7 @@ export async function updateLoan(
   const { data, error } = await supabase
     .from("loans")
     .update({
+      kind: normalized.kind,
       name: normalized.name,
       photo_path: photoPath,
       loaned_at: normalized.loanedAt,
@@ -298,6 +288,7 @@ export async function deleteLoan(id: string): Promise<void> {
 export async function importLocalLoans(loans: LocalLoan[]): Promise<void> {
   for (const loan of loans) {
     await addLoan({
+      kind: "loan",
       name: loan.name,
       photoDataUrl: loan.photoDataUrl,
       loanedAt: loan.loanedAt,

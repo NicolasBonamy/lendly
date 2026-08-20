@@ -3,16 +3,28 @@
 create table if not exists public.loans (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
+  kind text not null default 'loan',
   name text not null,
   photo_path text,
   loaned_at date not null,
   borrower_name text not null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint loans_kind_check check (kind in ('loan', 'borrow'))
 );
 
 create index if not exists loans_user_id_loaned_at_idx
   on public.loans (user_id, loaned_at desc, created_at desc);
+
+-- Existing projects: CREATE TABLE IF NOT EXISTS does not add new columns.
+alter table public.loans
+  add column if not exists kind text not null default 'loan';
+
+alter table public.loans
+  drop constraint if exists loans_kind_check;
+
+alter table public.loans
+  add constraint loans_kind_check check (kind in ('loan', 'borrow'));
 
 alter table public.loans enable row level security;
 
